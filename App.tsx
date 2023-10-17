@@ -8,6 +8,7 @@
 import type {PropsWithChildren} from 'react';
 import React, {useEffect} from 'react';
 import {
+  Button,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -75,7 +76,6 @@ export const useEnsureEventShimsAreLoaded = () => {
       globalThis.EventTarget = EventTarget;
     }
 
-    console.log({event: globalThis.Event, eventTarget: globalThis.EventTarget});
     if (!globalThis.EventTarget || !globalThis.Event) {
       throw new Error(
         'Event Target or Event not set properly and everything is gonna suck',
@@ -92,14 +92,56 @@ const Loading = () => {
 };
 
 const GoodStuff = () => {
-  const event = globalThis.Event;
-  const eventTarget = globalThis.EventTarget;
-  return (
-    <Section title="Check event-target and set">
-      <Text>Event Target: {JSON.stringify(eventTarget)}</Text>
-      <Text>Event: {JSON.stringify(event)}</Text>
-    </Section>
+  const [snapshot, send, actor] = useStatelyActor(
+    {
+      apiKey: 'sta_e922f7a4-809c-4eb0-8311-0a1142dd3c57',
+      url: skyurl,
+      sessionId: sessionKey,
+    },
+    skyConfig,
   );
+  const color = snapshot.value.toString();
+  return (
+    <View style={{padding: 12}}>
+      <Text style={styles.sectionTitle}>
+        stuff: {JSON.stringify(snapshot, null, 4)}
+      </Text>
+
+      <Text>{color}</Text>
+      <View style={{height: 50, width: 50, backgroundColor: color}} />
+      <View
+        style={{height: 100, flexDirection: 'column', backgroundColor: 'red'}}>
+        {actor?.getSnapshot().nextEvents.map(event => (
+          <Button
+            key={event}
+            onPress={() => {
+              send({type: event});
+            }}
+            title={event}
+          />
+        ))}
+      </View>
+    </View>
+  );
+};
+
+const skyurl = 'https://sky.stately.ai/5hIBJk';
+const sessionKey = 'shared';
+
+import {useStatelyActor} from '@statelyai/sky-react';
+import {skyConfig} from './app.sky';
+
+const useFoo = () => {
+  const [snapshot, send, actor] = useStatelyActor(
+    {
+      apiKey: 'sta_e922f7a4-809c-4eb0-8311-0a1142dd3c57',
+      url: skyurl,
+      sessionId: sessionKey,
+    },
+    skyConfig,
+  );
+
+  return [snapshot, send, actor];
 };
 
 function App(): JSX.Element {
