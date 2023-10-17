@@ -1,15 +1,14 @@
 /**
  * @format
  */
-import {Event, EventTarget} from 'event-target-shim';
 
-if (!globalThis.event) {
-  globalThis.event = Event;
-}
+// if (!globalThis.event) {
+//   globalThis.event = Event;
+// }
 
-if (!globalThis.eventTarget) {
-  globalThis.eventTarget = EventTarget;
-}
+// if (!globalThis.eventTarget) {
+//   globalThis.eventTarget = EventTarget;
+// }
 
 import {AppRegistry} from 'react-native';
 import App from './App';

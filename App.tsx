@@ -1,67 +1,33 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import type {PropsWithChildren} from 'react';
 import React, {useEffect} from 'react';
-import {
-  Button,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import {Button, SafeAreaView, StyleSheet, Text, View} from 'react-native';
 
-import {Colors} from 'react-native/Libraries/NewAppScreen';
+import {useStatelyActor} from '@statelyai/sky-react';
+import {skyConfig} from './app.sky';
 
+/**
+ * Ensures that the necessary event shims are loaded.
+ *
+ * Required to use Stately Sky on React Native.
+ *
+ * MUST to be called at the top level of the app BEFORE `useStatelyActor` is invoked.
+ * You MUST prevent any component that uses the `useState hook from being mounted before this is called.
+ *
+ * Required via Stately Sky -> PartySocket
+ * - https://github.com/statelyai/sky/blob/main/packages/sky-core/src/actorFromStately.ts#L1
+ * - Related issue from Party Kit explaining need for event-target-shim: https://github.com/partykit/partykit/issues/232
+ *
+ * @return {boolean} The value indicating whether the event shims are set or not.
+ */
+/**
+ * Install `event-target-shim`
+ */
 import {Event, EventTarget} from 'event-target-shim';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
-if (!globalThis.event) {
-  globalThis.event = Event;
-}
-
-if (!globalThis.eventTarget) {
-  globalThis.eventTarget = EventTarget;
-}
-
 export const useEnsureEventShimsAreLoaded = () => {
-  const [shimIsSet, setShimIsSet] = React.useState(false);
+  const [shimIsSet, setShimIsSet] = React.useState(
+    [globalThis.Event, globalThis.EventTarget].every(
+      requiredGlobal => requiredGlobal !== undefined,
+    ),
+  );
 
   useEffect(() => {
     if (shimIsSet) {
@@ -88,7 +54,7 @@ export const useEnsureEventShimsAreLoaded = () => {
 };
 
 const Loading = () => {
-  return <Text>Loading shims</Text>;
+  return <Text>Checking & potentially setting shims</Text>;
 };
 
 const GoodStuff = () => {
@@ -128,48 +94,16 @@ const GoodStuff = () => {
 const skyurl = 'https://sky.stately.ai/5hIBJk';
 const sessionKey = 'shared';
 
-import {useStatelyActor} from '@statelyai/sky-react';
-import {skyConfig} from './app.sky';
-
-const useFoo = () => {
-  const [snapshot, send, actor] = useStatelyActor(
-    {
-      apiKey: 'sta_e922f7a4-809c-4eb0-8311-0a1142dd3c57',
-      url: skyurl,
-      sessionId: sessionKey,
-    },
-    skyConfig,
-  );
-
-  return [snapshot, send, actor];
-};
-
 function App(): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
   const shimsAreLoaded = useEnsureEventShimsAreLoaded();
 
   const Content = shimsAreLoaded ? GoodStuff : Loading;
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Content />
-        </View>
-      </ScrollView>
+    <SafeAreaView>
+      <View>
+        <Content />
+      </View>
     </SafeAreaView>
   );
 }
