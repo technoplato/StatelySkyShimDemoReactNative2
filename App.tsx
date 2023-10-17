@@ -5,8 +5,8 @@
  * @format
  */
 
-import React from 'react';
 import type {PropsWithChildren} from 'react';
+import React, {useEffect} from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -17,13 +17,9 @@ import {
   View,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import {Colors} from 'react-native/Libraries/NewAppScreen';
+
+import {Event, EventTarget} from 'event-target-shim';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -55,8 +51,62 @@ function Section({children, title}: SectionProps): JSX.Element {
   );
 }
 
+if (!globalThis.event) {
+  globalThis.event = Event;
+}
+
+if (!globalThis.eventTarget) {
+  globalThis.eventTarget = EventTarget;
+}
+
+export const useEnsureEventShimsAreLoaded = () => {
+  const [shimIsSet, setShimIsSet] = React.useState(false);
+
+  useEffect(() => {
+    if (shimIsSet) {
+      return;
+    }
+
+    if (!globalThis.Event) {
+      globalThis.Event = Event;
+    }
+
+    if (!globalThis.EventTarget) {
+      globalThis.EventTarget = EventTarget;
+    }
+
+    console.log({event: globalThis.Event, eventTarget: globalThis.EventTarget});
+    if (!globalThis.EventTarget || !globalThis.Event) {
+      throw new Error(
+        'Event Target or Event not set properly and everything is gonna suck',
+      );
+    }
+    setShimIsSet(true);
+  }, [shimIsSet]);
+
+  return shimIsSet;
+};
+
+const Loading = () => {
+  return <Text>Loading shims</Text>;
+};
+
+const GoodStuff = () => {
+  const event = globalThis.Event;
+  const eventTarget = globalThis.EventTarget;
+  return (
+    <Section title="Check event-target and set">
+      <Text>Event Target: {JSON.stringify(eventTarget)}</Text>
+      <Text>Event: {JSON.stringify(event)}</Text>
+    </Section>
+  );
+};
+
 function App(): JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
+  const shimsAreLoaded = useEnsureEventShimsAreLoaded();
+
+  const Content = shimsAreLoaded ? GoodStuff : Loading;
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
@@ -71,25 +121,11 @@ function App(): JSX.Element {
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         style={backgroundStyle}>
-        <Header />
         <View
           style={{
             backgroundColor: isDarkMode ? Colors.black : Colors.white,
           }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
+          <Content />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -100,6 +136,8 @@ const styles = StyleSheet.create({
   sectionContainer: {
     marginTop: 32,
     paddingHorizontal: 24,
+    flexDirection: 'column',
+    flex: 1,
   },
   sectionTitle: {
     fontSize: 24,
