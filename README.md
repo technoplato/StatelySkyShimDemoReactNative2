@@ -24,7 +24,7 @@ Too distracted to modify the docs but here's the code for addressing this from a
 import {Event, EventTarget} from 'event-target-shim';
 export const useEnsureEventShimsAreLoaded = () => {
   const [shimIsSet, setShimIsSet] = React.useState(
-    [globalThis.Event && globalThis.EventTarget].every(
+    [globalThis.Event, globalThis.EventTarget].every(
       requiredGlobal => requiredGlobal !== undefined,
     ),
   );
